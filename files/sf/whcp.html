@@ -1,0 +1,66 @@
+<html>
+
+	<body bgcolor="#333333"; color: #fff>
+
+		<head>
+
+		<meta charset="utf-8">
+		<title>Essyrev - SF [WHPL]</title>
+
+		</head>
+
+	<iframe src="https://essyrev.github.io/files/sf/main.html"  width="350" height=95% align="left" frameborder="0">
+		Жесть конечно, но у тебя не прогрузится эта часть. Почему? Потому-что у тебя браузер старой версии (или другое что-нибудь, не знаю, не шарю!)
+	</iframe>
+
+
+	<style type="text/css">
+	.line {
+ 	padding: 10px 97.5px;
+        margin: (100% * -1 - 25) 28%;
+	width: 70%;
+	height: 95%;
+	background: #333; 
+	color: white}
+	</style>
+	</head>
+	<body>
+	<p><textarea class="line" name="line" readonly disabled >
+--@name Wallhack [Chips]
+--@author Essyrev
+--@client
+
+local function FND(class)
+
+    local fnd = find.byClass(class)
+
+    local type = ""
+    if class == "starfall_processor" then type = "SF " else type = "E2 " end
+
+    for i = 1, #fnd do
+        local x = fnd[i]:getPos():toScreen().x
+        local y = fnd[i]:getPos():toScreen().y
+        local sx,sy = render.getResolution()
+    
+        if (x <= 0 or x >= sx) or (y <= 0 or y >= sy) then continue end
+    
+        local chip = type..fnd[i]:getChipName() or "nil"
+        local owner = "OWNER: "..fnd[i]:getOwner():getName()
+        local txt = chip.."\n"..owner
+        render.drawText(x,y,txt, TEXT_ALIGN_CENTER)
+    
+    end
+
+end
+
+local function HUD()
+    FND("starfall_processor")
+    FND("gmod_wire_expression2")
+end
+
+hook.add("drawhud","",HUD)
+if player() == owner() then enableHud(player(),true) end
+		</textarea></p>
+	</body>
+	
+</html>
