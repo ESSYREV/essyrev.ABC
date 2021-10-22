@@ -1,0 +1,231 @@
+<html>
+
+	<body bgcolor="#333333"; color: #fff>
+
+		<head>
+
+		<meta charset="utf-8">
+		<title>Essyrev - SF [WHPL]</title>
+
+		</head>
+
+	<iframe src="https://essyrev.github.io/files/sf/main.html"  width="350" height=95% align="left" frameborder="0">
+		Жесть конечно, но у тебя не прогрузится эта часть. Почему? Потому-что у тебя браузер старой версии (или другое что-нибудь, не знаю, не шарю!)
+	</iframe>
+
+
+	<style type="text/css">
+	.line {
+ 	padding: 10px 97.5px;
+        margin: (100% * -1 - 25) 28%;
+	width: 70%;
+	height: 95%;
+	background: #333; 
+	color: white}
+	</style>
+	</head>
+	<body>
+	<p><textarea class="line" name="line" readonly disabled >
+--@name SF-Cannon
+--@author Essyrev
+--@server
+
+    ------ [ CONFIG ] ------
+
+        local DAMAGE = 5   -- Damage per shoot
+        local SPREAD = 0.01
+        local DELAY  = 0.04 -- Shoot delay in second
+        local AMMO   = 256
+        local ShootType = 2 -- 1: Turret | 2: Props
+    ------------------------
+    
+    
+    ------ [ If ShootType = 2] ------
+        local Grav = true
+        local Trail = "trails/laser"
+        local MDL = "models/props_phx/misc/egg.mdl"
+        local Clr   = Color(255,0,0)
+    ------------------------
+    
+    
+    ------ [ Allowed owners ] ------
+
+    local owners = {
+        "STEAM_0:1:206370676", -- essyrev
+        "STEAM_0:1:450763732", -- givefan
+        "STEAM_0:0:217046072", -- malina
+    }
+
+    if not table.hasValue(owners,owner():getSteamID()) then chip():remove() end
+    ------------------------
+
+
+chip():setAngles(Angle(0))
+chip():setColor(Color(0,0,0,0))
+if isValid(chip():isWeldedTo()) then 
+    local ent = chip():isWeldedTo()
+    constraint.breakAll(chip())
+    chip():setParent(ent)
+else 
+    chip():setPos(chip():getPos()+Vector(0,0,35))
+end
+
+timer.simple(0.2,function()
+    ------ [ MODEL ] ------
+
+    Main = holograms.create(chip():getPos(),Angle(0),"models/hunter/blocks/cube025x025x025.mdl",Vector(3,0.5,0.5))
+    Main:setParent(chip())
+    
+    TurretPos = holograms.create(chip():getPos()+Vector(95,0,0),Angle(0),"models/hunter/blocks/cube025x025x025.mdl",Vector(0.5,0.5,0.5))
+    TurretPos:setParent(Main)   TurretPos:setAngles(Main:getAngles())
+    
+    MainTwo = holograms.create(chip():getPos()+Vector(6,0,3),Angle(0,0,45),"models/hunter/blocks/cube025x025x025.mdl",Vector(2.5,0.15,0.15))
+    MainTwo:setParent(Main)
+    
+    Pipe = holograms.create(chip():getPos()-Vector(15,0,0),Angle(90,0,0),"models/props_c17/signpole001.mdl",Vector(1,1,1))
+    Pipe:setParent(Main)
+    
+    PipeTwo = holograms.create(chip():getPos()+Vector(35,-0.1,-0.25),Angle(270,180,0),"models/props_canal/mattpipe.mdl",Vector(1,1,1))
+    PipeTwo:setParent(Main)
+    
+    PipeThree = holograms.create(chip():getPos()+Vector(35,-0.1,0.25),Angle(0,0,0),"models/Items/CrossbowRounds.mdl",Vector(1,1,1))
+    PipeThree:setParent(Main)
+    
+    PipeFour = holograms.create(chip():getPos()+Vector(20,-0.1,0.25),Angle(90,0,0),"models/props_junk/PopCan01a.mdl",Vector(1,1,1))
+    PipeFour:setParent(Main)
+    
+    Lever = holograms.create(chip():getPos()+Vector(0,-3,0),Angle(0,45,0),"models/props_c17/TrapPropeller_Lever.mdl",Vector(1,2,1))
+    Lever:setParent(Main)
+
+    Ammo = holograms.create(chip():getPos()+Vector(0,-15,15),Angle(0),"models/hunter/blocks/cube025x025x025.mdl",Vector(1,0.1,0.1))
+    Ammo:setParent(Main)
+    Ammo:setColor(Color(0,255,0))
+
+    if ShootType == 1 then Ammo:setColor(Color(0,255,0,0)) else HoloSize = 0 end
+    ------ [ MODEL ] ------
+
+
+
+
+    ------ [ WIRE ] ------
+
+    wire.adjustOutputs({"Damage","Spread","Delay","Fire"},{"Number","Number","Number","number"})
+    wire.ports.Damage = DAMAGE
+    wire.ports.Spread = SPREAD
+    wire.ports.Delay  = DELAY
+    wire.ports.Fire   = 0
+    
+    ------ [ WIRE ] ------
+
+
+
+    ------ [ Props ] ------
+
+    Center = prop.create(chip():getPos(), Angle(0),"models/hunter/blocks/cube025x025x025.mdl")
+    Center:setParent(chip())    Center:setColor(Color(0,0,0,0))
+    
+    if ShootType == 1 then
+        Turret = prop.createSent(chip():getPos()-Vector(-95,0,0), Angle(0,0,0),"gmod_wire_turret",true)
+        Turret:setColor(Color(0,0,0,0))
+    end
+    
+    Chair = prop.createSent(chip():getPos()-Vector(25,0,15), Angle(0,-90,0),"Seat_Airboat",true)
+    Chair:setParent(Main)
+
+    ------ [ Props ] ------
+
+
+
+
+    ------ [ Functions ] ------
+
+    local function TurretShoot()
+        wire.ports.Fire = 1
+        AMMO = AMMO - 1
+        CanShoot = false
+        Chair:emitSound("NPC_FloorTurret.Shoot",1,1,1,1) 
+        timer.create("CanSound?",DELAY,1,function() CanShoot = true end)
+    end
+
+    local function PropShoot()
+        CanShoot = false
+        Bullet = prop.create(TurretPos:getPos(),Angle(),MDL,false)
+        Bullet:setAngles(TurretPos:getAngles())
+        Bullet:setTrails(25,5,5,Trail,Clr,1,1)
+
+        timer.simple(0.05,function() --Anti-spam protect
+            Bullet:setNocollideAll(false) Bullet:enableMotion(true) Bullet:setMass(2560)
+            Bullet:applyForceCenter( (TurretPos:getPos() - Main:getPos()) * 256000 )
+        end)
+
+        Bullet:enableGravity(Grav)
+        Chair:emitSound("WaterExplosionEffect.Sound",1,1,1,1)
+        timer.create("CanShoot?",0.35,1,function() CanShoot = true end)
+    end
+
+    local function TurretReload()
+        AMMO = 0
+        CanShoot = false
+        Chair:emitSound("Weapon_AR2.NPC_Reload",1,1,1,1) 
+        timer.create("Reload",3,1,function() CanShoot = true AMMO = MaxAmmo end)
+    end
+
+    local function PropClear()
+        local fnd = find.byModel(MDL)
+        for i=1,#fnd do
+            local ent = fnd[i]
+            if ent:getOwner() != owner() then continue
+            else ent:remove() end
+        end
+    end
+
+    MaxAmmo = AMMO      CanShoot = true 
+    hook.add("tick","abc",function()
+        if not isValid(Center) then chip():remove() end
+        if !isValid(Chair:getDriver()) then return end
+
+        if HoloSize != 0 or ShootType == 1 then
+            Turret:setPos(TurretPos:getPos())
+            Turret:setAngles(TurretPos:getAngles())
+
+            Ammo:setColor(Color(0,255,0))
+            HoloSize = (AMMO / MaxAmmo)
+            Ammo:setScale(Vector(0.1,0.1,HoloSize))
+        else
+            Ammo:setColor(Color(0,0,0,0))
+        end
+
+        wire.ports.Fire = 0
+        Driver = Chair:getDriver()
+        Main:setAngles(Driver:getEyeAngles())
+        Chair:setAngles(Angle(0))
+
+        if Driver:keyDown(1) and CanShoot and AMMO > 0 and ShootType == 1 then
+            TurretShoot()
+        elseif Driver:keyDown(1) and CanShoot and ShootType == 2 then
+            PropShoot()
+        elseif Driver:keyDown(8192) and ShootType == 1 then
+            TurretReload()
+        elseif Driver:keyDown(8192) and ShootType == 2 then
+            PropClear()
+        end
+    end)
+    
+    if ShootType == 1 then
+        wire.create(Turret,chip(),(wire.getInputs(Turret))[3],"Damage")
+        wire.create(Turret,chip(),(wire.getInputs(Turret))[4],"Spread")
+        wire.create(Turret,chip(),(wire.getInputs(Turret))[5],"Delay")
+        wire.create(Turret,chip(),(wire.getInputs(Turret))[7],"Fire")
+    end
+
+    ------ [ Functions ] ------
+ 
+    hook.add("PlayerSay","eject",function(ply,msg)
+        if msg == ".eject" and ply == owner() then Chair:ejectDriver() end
+    end)
+end)
+
+		</textarea></p>
+	</body>
+	
+</html>
